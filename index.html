@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <!-- <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet"> -->
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.16.2/axios.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+
+
+</head>
+
+<body>
+    <v-app id="app">
+        <v-navigation-drawer app v-model="showLeftDrawer">
+            Cart : {{$data.cart}}
+        </v-navigation-drawer>
+
+        <v-app-bar app>
+            <template v-slot:activator="{ on, attrs }"></template>
+            <v-app-bar-nav-icon @click="showLeftDrawer=!showLeftDrawer"></v-app-bar-nav-icon>
+            <v-app-bar-title>
+                Catty Web Store
+            </v-app-bar-title>
+            <v-spacer></v-spacer>
+            <!-- **************************Кнопка перехода в корзину**************************** -->
+            <v-tooltip bottom nudge-bottom="5">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on">
+                        <v-badge :content="cartcount" :value="cartcount" color="warning">
+                            <v-icon>mdi-cart</v-icon>
+                        </v-badge>
+                    </v-btn>
+                </template>
+                <span>Корзина</span>
+            </v-tooltip>
+            <!-- **************************Кнопка перехода в настройки аккаунта***************** -->
+            <v-tooltip bottom nudge-left="15" nudge-bottom="5">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on">
+                        <v-icon>mdi-account</v-icon>
+                    </v-btn>
+                </template>
+                <span>Настройки аккаунта</span>
+            </v-tooltip>
+        </v-app-bar>
+
+        <v-main>
+            <v-container fluid v-for="product in products" :key="product.id">
+                <v-card class="d-flex">
+                    <div class="text-center mt-4" max-width="auto">
+                        <v-rating
+                            :value="product.rating"   
+                            color="warning"
+                            empty-icon="mdi-star-outline"
+                            full-icon="mdi-star"
+                            half-icon="mdi-star-half"
+                            hover
+                            length="5"
+                            size="24"
+                        ></v-rating>
+                        <v-img :src="product.image" max-width="300"></v-img>
+                    </div>
+                    <v-container fluid>
+                        <v-card-title>
+                            {{product.title}} <v-spacer></v-spacer>Id : {{product.id}}
+                        </v-card-title>
+                        <hr>
+                        <v-card-subtitle v-html="product.description"></v-card-subtitle> 
+                        <hr>
+                        <br>
+                        <v-card-subtitle>
+                            <strong>
+                                <h2>Price : {{product.price | formatPrice}}</h2>
+                            </strong>
+                            <v-spacer></v-spacer>
+                                Available : {{product.availableValue}}
+                        </v-card-subtitle>
+
+                        <v-container>
+                            <v-btn class="warning dark" min-width="180" @click='addToCart(product.id, product.availableValue)'>Add to cart
+                                <v-icon class="ml-2">mdi-cart-plus</v-icon>
+                            </v-btn>
+                            <v-btn class="primary dark" min-width="180" class="ml-2" @click="removeFromCart">Remove
+                                <v-icon class="ml-2">mdi-cart-minus</v-icon>
+                            </v-btn>
+                            <v-btn class="error   dark" min-width="180" class="ml-2" @click="clearCart">Clear
+                                <v-icon class="ml-2">mdi-cart-remove</v-icon>
+                            </v-btn>
+                        </v-container>
+                    </v-container>   
+                </v-card>
+            </v-container>
+        </v-main>
+
+        <v-footer app>
+            <!-- -->
+        </v-footer>
+
+    </v-app>
+</body>
+<script>
+    var webstore = new Vue({
+        el: "#app",
+        vuetify: new Vuetify(),
+        data: {
+            ver: Vue.version,
+            products: [],
+            cart: [],
+            cartcount: 0,
+            showLeftDrawer: "true",
+            canAddToCart: "true",
+            canRemoveFromCart: "false",
+        },
+        methods: {
+            addToCart: function(id, available) {
+                if(available > 0){
+                    this.cart.push(id);
+                    console.log(this.cart,'Available : ',available);
+                    this.cartcount += 1;
+                }else {
+                    console.log('Sorry, Can`t add this product to cart');
+                };
+            },
+            clearCart: function () {
+                this.cart = [];
+                this.cartcount = 0;
+            },
+            removeFromCart: function (id) {
+                if(this.cart.length !== 0){
+                    this.canRemoveFromCart = true;
+                    this.cart.pop();
+                    this.cartcount -= 1;
+                    console.log('Can remove from cart : ', this.canRemoveFromCart)
+
+                }else {
+                    this.canRemoveFromCart = false;
+                    console.log('Can remove from cart : ', this.canRemoveFromCart)
+                };
+                
+            },
+        },
+
+        computed: {
+
+        },
+
+        created: function () {
+            console.log('created hook is active');
+            axios.get('./assets/product.json')
+                .then(response => {
+                    this.products = response.data.products;
+                    console.log('Вывод наименования продуктов : ', this.products);
+                })
+                .catch(error => {
+                    console.log("error", error);
+                })
+        },
+
+        filters: {
+            formatPrice: function (price) {
+                if (!parseInt(price)) {
+                    return "";
+                };
+                if (price > 99999) {
+                    var priceString = (price / 100).toFixed(2);
+                    var priceArray = priceString.split("").reverse();
+                    var index = 3;
+                    while (priceArray.length > index + 3) {
+                        priceArray.splice(index + 3, 0, ",");
+                        index += 4;
+                    };
+                    return priceArray.reverse().join("") + " $";
+                } else {
+                    return (price / 100).toFixed(2) + " $";
+                };
+            },
+        },
+    
+    });
+</script>
+
+</html>

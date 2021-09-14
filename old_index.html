@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Store</title>
+
+    <!-- <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet"> -->
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.16.2/axios.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+   
+
+</head>
+
+<body>
+
+    <v-app id='app'>
+        <!-- **************************Верхнее навигационное меню************************************************* -->
+        <v-app-bar color="blue" app dark>
+            <template v-slot:activator="{ on, attrs }"></template>
+            <v-app-bar-nav-icon></v-app-bar-nav-icon>
+            <v-app-bar-title>
+                Web Store
+            </v-app-bar-title>
+            <v-spacer></v-spacer>
+            <!-- **************************Кнопка перехода в корзину**************************** -->
+            <v-tooltip bottom nudge-bottom="5">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon @click="showCheckout" v-bind="attrs" v-on="on">
+                        <v-badge :content="cartcount" :value="cartcount" color="warning">
+                            <v-icon>mdi-cart</v-icon>
+                        </v-badge>
+                    </v-btn>
+                </template>
+                <span>Корзина</span>
+            </v-tooltip>
+            <!-- **************************Кнопка перехода в настройки аккаунта***************** -->
+            <v-tooltip bottom nudge-left="15" nudge-bottom="5">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon @click="showCreateUserDialog" v-bind="attrs" v-on="on">
+                        <v-icon>mdi-account</v-icon>
+                    </v-btn>
+                </template>
+                <span>Настройки аккаунта</span>
+            </v-tooltip>
+        </v-app-bar>
+        <!-- **************************Главная секция приложения**************************************** -->
+        <v-main>
+            <v-container v-if="showCart">
+                <v-container class="text-center primary rounded mt-4 mb-4">
+                    <v-card class="pb-2 pt-2">
+                        <h1>{{sitename}}</h1>
+                        <h3>We are use Vue {{ver}} version</h3>
+                    </v-card>
+                </v-container>
+                <v-container class="primary rounded mt-4 mb-4" v-for="product in products">
+                    <v-row>
+                        <!-- **************************Изображение товара****************************************************************** -->
+                        <v-col class="col-md-3">
+                            <v-card>
+                                <v-img :src="product.image" alt="whiskas image" width="400" height="400">
+                                <v-rating v-bind:value="product.rating"
+                                    background-color="grey lighten-2"
+                                    color="warning"
+                                    empty-icon="mdi-star-outline"
+                                    full-icon="mdi-star"
+                                    half-icon="mdi-star-half"
+                                    half-increments
+                                    hover
+                                    length="5"
+                                    size="64"
+                                ></v-rating>
+                            </v-card>
+                        </v-col>
+                        <!-- **************************Карта товара************************************************************************ -->
+                        <v-col>
+                            <v-card class="pa-10" height="100%">
+                                <h1 class="mb-4">{{product.title}}</h1>
+                                <v-divider class="mb-4"></v-divider>
+                                <p v-html="product.description">{{product.description}}</p>
+                                <v-divider></v-divider>
+                                <h2 class="mb-4">Price : {{product.price | formatPrice}}</h2>
+                                <!-- **************************Кнопки добавления и удаления товара************************************************* -->
+                                <v-container>
+                                    <!-- **************************Кнопка добавления*********************************** -->
+                                    <v-tooltip bottom open-delay="500" nudge-right="150" nudge-bottom="5">
+                                        <template v-slot:activator="{ on, attrs }">
+                                            <v-btn class="warning" @click="addToCart" :disabled="!canAddToCart"
+                                                v-bind="attrs" v-on="on">
+                                                <span>Add to cart</span>
+                                                <v-icon class="ml-2">mdi-cart-plus</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <span>Добавить товар в корзину</span>
+                                    </v-tooltip>
+                                    <!-- **************************Кнопка удаления товара****************************** -->
+                                    <v-tooltip bottom open-delay="500" nudge-right="150" nudge-bottom="5">
+                                        <template v-slot:activator="{ on, attrs }">
+                                            <v-btn class="primary ml-sm-4" dark v-show="cartcount"
+                                                @click="removeFromCart" v-bind="attrs" v-on="on">
+                                                <span>Remove from cart</span>
+                                                <v-icon class="ml-2">mdi-cart-minus</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <span>Удалить товар из корзины</span>
+                                    </v-tooltip>
+                                    <!-- **************************Кнопка очистки корзины****************************** -->
+                                    <v-tooltip bottom open-delay="500" nudge-right="150" nudge-bottom="5">
+                                        <template v-slot:activator="{ on, attrs }">
+                                            <v-btn class="red accent-2 ml-sm-4" dark v-show="cartcount"
+                                                @click="clearCart" v-bind="attrs" v-on="on">
+                                                <span>Clear cart</span>
+                                                <v-icon class="ml-2">mdi-cart-remove</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <span>Удалить товар из корзины</span>
+                                    </v-tooltip>
+                                    <!-- **************************Всплывающее сообщение о отсутствии товара****************************** -->
+                                    <v-snackbar v-if="!canAddToCart" :timeout="-1" :value="true" color="red" dark
+                                        absolute right shaped bottom>
+                                        So sorry. We are don`t have this product any more.
+                                    </v-snackbar>
+                                </v-container>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-container>
+            <v-container v-else="showCart">
+                This is a cart page.
+                {{$data.showCart}}
+            </v-container>
+            <!-- **************************Карта для вывода служебной информации*********************************************** -->
+            <v-container>
+                <v-container class="primary rounded">
+                    <v-card  class="pa-4">
+                        <v-container>
+                            <v-row>
+                                Vue versuion : {{$data.ver}}
+                            </v-row>
+                            <v-row>
+                                Cart : {{$data.cart}}
+                            </v-row>
+                            <v-row>
+                                Cartcount : {{$data.cartcount}}
+                            </v-row>
+                            <v-row>
+                                User info : {{$data.order.firstname}} {{$data.order.lastname}} {{$data.order.email}} {{$data.order.password}}
+                            </v-row>
+                            <v-row>
+                                Address : {{$data.order.region}} {{$data.order.city}} {{$data.order.address}}
+                            </v-row>
+                        </v-container>
+                    </v-card>
+                </v-container>
+            </v-container>
+            <!-- *********************************Форма регистрации пользователя*************************************** -->
+            <template v-if="createuser">
+                <v-row justify="center">
+                    <v-dialog v-model="createuser" persistent max-width="600px">
+                        <v-card>
+                            <v-card-title>
+                                <span class="text-h5">User Profile</span>
+                            </v-card-title>
+                            <v-card-text>
+                                <v-container>
+                                    <v-row>
+                                        <v-col cols="12" sm="6">
+                                            <v-text-field v-model="order.firstname" label="First name*" hint="Иванов"
+                                                required></v-text-field>
+                                        </v-col>
+
+                                        <v-col cols="12" sm="6">
+                                            <v-text-field v-model="order.lastname" label="Last name*" hint="Иванов"
+                                                persistent-hint required></v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="order.email" label="Email*" required></v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="order.password" label="Password*" type="password" required></v-text-field>
+                                        </v-col>
+                                        <v-col cols="12" sm="6">
+                                            <v-text-field v-model="order.city" label="City*" required></v-text-field>
+                                        </v-col>
+                                        <v-col cols="12" sm="6">
+                                            <v-autocomplete
+                                                v-model="order.region"
+                                                :items="['Тюменская обл.', 'Московская обл.', 'Омская обл.', 'Новосибирская обл.', 'Иркутская обл.', 'Самарская обл.', 'Саратовская обл.', 'Краснодарский край', 'Свердловская обл.']"
+                                                label="Region"></v-autocomplete>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="order.address" label="Address*" required></v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                                <small>*indicates required field</small>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="blue darken-1" text @click="createuser = false">
+                                    Close
+                                </v-btn>
+                                <v-btn color="blue darken-1" text @click="createuser = false">
+                                    Save
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </v-row>
+            </template>
+        </v-main>
+    </v-app>
+</body>
+<script>
+    var webstore = new Vue({
+        el: '#app',
+        vuetify: new Vuetify(),
+        data: {
+            sitename: 'This is a Super Web Store',
+            ver: Vue.version,
+            cartcount: 0,
+            cart: [],
+            showCart: true,
+            createuser: false,
+            products: [],
+
+            order: {
+                firstname: '',
+                lastname: '',
+                email: '',
+                password: '',
+                region  : '',
+                city    : '',
+                address : '',
+            },
+
+            
+            // product: {
+            //     id: 1001,
+            //     title: "Cat Food, 25lb bag",
+            //     description: "А 25 pound bag of '<em>irresistiЬle</em>'," +
+            //         "organic goodness for your cat. Имеется спорная точка зрения, гласящая примерно следующее: базовые сценарии поведения пользователей ограничены исключительно образом мышления! В частности, современная методология разработки обеспечивает актуальность экспериментов, поражающих по своей масштабности и грандиозности. Кстати, элементы политического процесса призваны к ответу.",
+            //     price: 200,
+            //     image: './assets/img/Whiskas.jpg',
+            //     availableValue: 5,
+            // },
+        },
+        computed: {
+            canAddToCart: function () {
+                return this.cartcount < this.product.availableValue
+            },
+
+        },
+        methods: {
+            addToCart: function () {
+                this.cart.push(this.product.id);
+                this.cartcount += 1;
+            },
+            removeFromCart: function () {
+                this.cart.pop();
+                this.cartcount -= 1;
+            },
+            clearCart: function () {
+                this.cart = [];
+                this.cartcount = 0;
+            },
+            consoleMessage: function () {
+                console.log('Test message.Ok, It`s work!');
+            },
+            showCheckout() {
+                console.log('Old createuser :', this.showCart);
+                this.showCart = this.showCart ? false : true;
+                console.log('Current create user :', this.showCart);
+            },
+            showCreateUserDialog() {
+                console.log('Old createuser :', this.creadeuser);
+                this.createuser = this.createuser ? false : true;
+                console.log('Current create user :', this.creadeuser);
+            },
+        },
+        filters: {
+            formatPrice: function (price) {
+                if (!parseInt(price)) {
+                    return "";
+                };
+                if (price > 99999) {
+                    var priceString = (price / 100).toFixed(2);
+                    var priceArray = priceString.split("").reverse();
+                    var index = 3;
+                    while (priceArray.length > index + 3) {
+                        priceArray.splice(index + 3, 0, ",");
+                        index += 4;
+                    };
+                    return priceArray.reverse().join("") + " $";
+                } else {
+                    return (price / 100).toFixed(2) + " $";
+                };
+            },
+        },
+
+        created : function () {
+            console.log('created hook is active');
+            axios.get('./assets/product.json')
+            .then(response => {
+                this.products = response.data.products;
+                console.log('Вывод наименования продуктов : ',this.products);
+            })
+        },
+
+    })
+</script>
+
+</html>

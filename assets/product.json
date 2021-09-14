@@ -1,0 +1,49 @@
+{
+    "products": [
+        {
+            "id": 1001,
+            "title": "Cat Food, 25lb bag",
+            "description": "А 25 pound bag of '<em>irresistiЬle</em>',",
+            "price": 150,
+            "image": "./assets/img/Whiskas.jpg",
+            "availableValue": 20,
+            "rating": 5
+        },
+        {
+            "id": 1002,
+            "title": "Yarn",
+            "description": "Yarn your cat сап play with for а very <strong>long</strong> time!",
+            "price": 220,
+            "image": "./assets/img/catyarn.jpg",
+            "availableValue": 15,
+            "rating": 2
+        },
+        {
+            "id": 1003,
+            "title": "Kitty Litter",
+            "description": "Premium kitty litter for your cat",
+            "price": 330,
+            "image": "./assets/img/kitylitter.jpeg",
+            "availableValue": 30,
+            "rating": 4
+        },
+        {
+            "id": 1004,
+            "title": "Cat House",
+            "description": "А place for your cat to play!",
+            "price": 5000,
+            "image": "./assets/img/cathouse.png",
+            "availableValue": 5,
+            "rating": 3
+        },
+        {
+            "id": 1005,
+            "title": "Laser Pointer",
+            "description": "Drive your cat crazy with this <em>amazing</em> product",
+            "price": 440,
+            "image": "./assets/img/laserpointer.jpg",
+            "availableValue": 8,
+            "rating": 4
+        }
+    ]
+}
